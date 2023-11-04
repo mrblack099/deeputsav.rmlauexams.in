@@ -1,0 +1,259 @@
+﻿$(document).ready(function () {
+    $("#hdnMode").val("Add");
+    $("#hdnID").val("");
+    bind_data();
+    $('#txtunit').change(function () {
+        chng_name(this);
+    })
+
+    $('#txtmob').change(function () { 
+        if (validateMobileNumber($('#txtmob')) == false) { return false; }
+    })
+    
+
+    $('#txtemail').change(function () {
+        if (checkmail($('#txtemail')) == false) { return false; }
+    })
+
+    $("#btnSave").click(function () {
+    
+        var name  =  ($("#txtname").val()).trim();
+        var mob   =   ($("#txtmob").val()).trim();
+        var email = ($("#txtemail").val()).trim();
+        var unit = ($("#txtunit").val()).trim();
+        var unitHindi = ($("#txtunitHindi").val()).trim();
+        if ($("#hdnMode").val() == "Add")
+        { id = 0 } else { id = $("#hdnID").val() }
+        var flag = true;
+        if (name == "") {
+            alertify.alert("Please Enter Nodal Officer Name");
+            flag = false; return false;
+        }
+
+        else if (mob == "") {
+            alertify.alert("Please Enter Mobile Number");
+            flag = false; return false;
+        }
+        else if (validateMobileNumber($('#txtmob')) == false)
+        {
+            flag = false;
+            return false;
+        }
+        else if (email == "") {
+            alertify.alert("Please Enter Email Id");
+            flag = false; return false;
+        }
+        else if (checkmail($('#txtemail')) == false) {
+            flag = false;
+            return false;
+        }
+
+        else if (unit == "") {
+            alertify.alert("Please Enter Instituion/Organisation");
+            flag = false; return false;
+        }
+
+
+        else if (unitHindi == "") {
+            alertify.alert("Please Enter Instituion/Organisation Name in Hindi");
+            flag = false; return false;
+        }
+
+        else if (flag == true) {
+           // alertify.alert("success");
+
+            {
+                var foo = {};
+              foo.name =   (($("#txtname").val()).trim());
+                foo.mobile = (($("#txtmob").val()).trim());
+                foo.email = (($("#txtemail").val()).trim());
+              foo.unit = (($("#txtunit").val()).trim());
+                foo.unitHindi = ($("#txtunitHindi").val()).trim();
+                foo.id = id;
+            }
+            $.ajax({
+                type: "POST",
+                url: "/DeepUtsav/Create_Login_Save",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(foo),
+                dataType: "json",
+
+                beforeSend: function () {
+                    debugger;
+                },
+
+
+                success: function (obj) {
+                    debugger;
+                    var list = (obj)
+                    if (list.Table.length > 0) {
+                        alert("Data Submitted Succesfully ");
+                        location.reload();
+                    }
+                    else {
+                        window.location.href = "Index"
+                    }
+                }
+
+
+            })
+        }
+
+        else {
+             alert("Try Again");
+        }
+
+    })
+
+
+
+
+
+    $("body").on("click", ".btn-edit", function () {
+        var id = $(this).parents("tr").attr('data-id');  
+        var nam = $(this).parents("tr").attr('data-name');
+        var mob = $(this).parents("tr").attr('data-mobile'); 
+        var Email_Id = $(this).parents("tr").attr('data-mail');
+        var unit = $(this).parents("tr").attr('data-unit');
+        var unitHindi = $(this).parents("tr").attr('data-unitHindi');
+
+        $("#hdnMode").val("Edit");
+        $("#hdnID").val(id);
+        $("#btnSave").val("Update");
+        debugger;
+        $("#txtname").val(nam);
+        $('#txtmob').val(mob); 
+        $('#txtemail').val(Email_Id); 
+        $('#txtunit').val(unit);
+        $('#txtunitHindi').val(unitHindi);
+    });
+
+    $("body").on("click", ".btn-delete", function () {
+
+        var id = $(this).parents("tr").attr('data-id');
+        $("#hdnID").val(id);
+        debugger;
+        $.ajax({
+            type: "POST",
+            url: "/DeepUtsav/Delete_Record",
+            data: "{pk_id: '" + id + "'}", 
+            contentType: "application/json; charset=utf-8",
+            dataType: 'JSON',
+            beforeSend: function () {
+                    },
+            success: function (response) {
+                if (response.Table.length > 0) {
+
+                    alert("Record Deleted Successfully");
+                }
+            },
+            complete: function () {
+                location.reload();
+            }
+
+
+        });
+    });
+
+
+     
+
+
+});
+function chng_name(EnglishText) {
+
+    Englishname = $(EnglishText).val();
+    // alert(Englishname);
+    $.ajax({
+        type: "POST",
+        url: 'https://www.google.com/inputtools/request?ime=transliteration_en_hi&text=' + Englishname,
+        dataType: "json",
+        success: function (data) {
+            // debugger; 
+            $("#txtunitHindi").val(data[1][0][1]);
+        },
+        error: function () {
+            return true; console.log("Hindi Translation cannot be done.");
+        }
+    });
+}
+
+function checkmail(ctrl) {
+    var emailReg = /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/;
+    if (!emailReg.test($(ctrl).val())) {
+        $(ctrl).focus();
+        //alertify.alert(msg);
+        alertify.alert("Enter Valid Email Id");
+        return false;
+    } else {
+        return true;
+    }
+}
+
+function validateMobileNumber(ctrl) {
+    debugger;
+    var mobilePattern = /^[6-9]\d{9}$/;
+    mobileNumber = $(ctrl).val();
+    if (mobilePattern.test(mobileNumber)) {
+
+        return true;
+    }
+    else {
+        alertify.alert("Enter Valid Mobile No");
+        $(ctrl).focus();
+        return false;
+    }
+}
+function bind_data() {
+    $.ajax({
+        type: "POST",
+        url: "/DeepUtsav/Get_data",
+        contentType: "application/json; charset=utf-8", 
+        dataType: "json",
+
+        beforeSend: function () {
+            debugger;
+        }, 
+
+
+        success: function (obj) {
+            debugger;
+            var list = (obj)
+            if (list.Table.length > 0) {
+                var table_length = list.Table.length;
+                var index = "";
+                var trHTML = '';
+                $('#Admindata').empty();
+                debugger;
+                for (var i = 0; i < table_length; i++) {
+                    index = parseInt(i) + 1;
+                    trHTML += "<tr data-id='" + list.Table[i]["Pk_Admin_id"] + "' data-name='" + list.Table[i]["CName"] + "' data-mobile='" + list.Table[i]["Mobile"] + "' data-mail='" + list.Table[i]["Email"] + "' data-unit='" + list.Table[i]["Unit"] + "' data-unitHindi='" + list.Table[i]["HindiUnit"] + "'>";
+                    trHTML += "<td><span>" + index + "</span></td>";
+                    trHTML += "<td><span>" + list.Table[i]["CName"] + "</span>";
+                    trHTML += "<td><span>" + list.Table[i]["Mobile"] + "</span>";
+                    trHTML += "<td><span>" + list.Table[i]["Email"] + "</span></td>";
+                    trHTML += "<td><span>" + list.Table[i]["Unit"] + "</span></td>";
+                    trHTML += "<td><span>" + list.Table[i]["HindiUnit"] + "</span></td>";
+                    trHTML = trHTML + "<td> <input type='button'  class='btn btn-info btn-xs btn-edit' value='Edit' /></td>";
+                    trHTML = trHTML + "<td><input type='button'  class='btn btn-info btn btn-danger btn-xs btn-delete' value='Delete' /></td>";
+                }
+                trHTML += "</tr>";
+
+
+                trHTML = '<tbody>' + trHTML + '</tbody>';
+                var thead = '<thead><tr><th>#</th> ';
+                thead += '<th>Name</th><th> Mobile No.</th> <th>Email Id</th>';
+                thead += '<th>Instituion/Organisation</th><th>Instituion/Organisation in Hindi</th><th>Edit</th><th>Delete</th></tr></thead >';
+                $('#Admindata').append(thead);
+                $('#Admindata').append(trHTML);
+
+            }
+            else {
+               
+            }
+        }
+
+
+    })
+}
+
